@@ -1,0 +1,83 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <!-- Bootstrap CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+    <!-- CSS -->
+    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/themes/nest.css">
+
+</head>
+
+<body>
+    <div class="container content">
+        <div class="card border-0 m-auto" style="width: 35rem;">
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon3">https://</span>
+                    </div>
+                    <input id="url" type="text" class="form-control" name="url" placeholder="url" aria-label="url"
+                        aria-describedby="basic-addon2" />
+                    <div class="input-group-append">
+                        <button id="capture" class="btn btn-primary w-24" type="button">
+                            <div id="spinner" class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <span id="btn-txt">Capture</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="links" class="d-none">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="basic-addon3">Pdf</span>
+                        </div>
+                        <input id="pdf-url" type="text" class="form-control" placeholder="url" aria-label="url"
+                            aria-describedby="basic-addon2" readonly />
+                        <div class="input-group-append">
+                            <button id="view-pdf" class="btn btn-primary btn-sm" type="button">
+                                <span id="btn-txt">View</span>
+                            </button>
+                        </div>
+                        <div class="input-group-append">
+                            <button id="copy-pdf" class="btn btn-success btn-sm" type="button">
+                                <span id="view-pdf-btn-txt">Copy link</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="basic-addon3">Image</span>
+                        </div>
+                        <input id="img-url" type="text" class="form-control" placeholder="url" aria-label="url"
+                            aria-describedby="basic-addon2" readonly />
+                        <div class="input-group-append">
+                            <button id="view-img" class="btn btn-primary btn-sm" type="button">
+                                <span id="view-img-btn-txt">View</span>
+                            </button>
+                        </div>
+                        <div class="input-group-append">
+                            <button id="copy-img" class="btn btn-success btn-sm" type="button">
+                                <span id="copy-img-btn-txt">Copy link</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/validate.js/0.13.1/validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.min.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+
+</html>
