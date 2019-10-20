@@ -4,6 +4,7 @@
   "description": "App to take screenshot of a webpage and save it as a pdf or image",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Nowfal",
