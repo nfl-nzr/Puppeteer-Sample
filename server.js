@@ -99,7 +99,7 @@ app.post("/capture", async (req, res) => {
         pageErr.code = 500
     }
   });
-  if (Object.entries(pageErr).length > 0 && pageErr.constructor === Object) { return send(res, pageErr.code, { message: pageErr.message }, HEADERS.JSON_HEADER); }
+  if (Object.entries(pageErr).length > 0 && pageErr.constructor === Object) { return send(res, pageErr.code, { message: err }, HEADERS.JSON_HEADER); }
   else { return send(res, 200, links, HEADERS.JSON_HEADER) };
 });
 
