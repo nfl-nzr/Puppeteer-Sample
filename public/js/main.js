@@ -48,6 +48,7 @@ $(document).ready(function () {
                 error: function (error) {
                     $('#spinner').hide();
                     $('#btn-txt').text('Capture');
+                    $("#links").addClass('d-none');
                     new Noty({
                         type: 'error',
                         layout: 'topCenter',
