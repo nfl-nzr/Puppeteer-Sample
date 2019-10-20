@@ -21,7 +21,7 @@ $(document).ready(function () {
         } else {
             $.ajax({
 
-                url: 'http://localhost:3000/capture',
+                url: 'https://loyalitics-test.herokuapp.com/capture',
                 type: 'POST',
                 data: {
                     "url": captureUrl

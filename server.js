@@ -61,8 +61,8 @@ const generatePdfAndImage = async url => {
     await page.goto(url, { "waitUntil": "networkidle0" });
 
     await parallelActions(page, fileName);
-    obj.pdf = `http://localhost:3000/pdf/${fileName}`;
-    obj.img = `http://localhost:3000/img/${fileName}`;
+    obj.pdf = `https://loyalitics-test.herokuapp.com/pdf/${fileName}`;
+    obj.img = `https://loyalitics-test.herokuapp.com/img/${fileName}`;
     return obj;
   } catch (error) {
     if (pageTemp) await pageTemp.close()
