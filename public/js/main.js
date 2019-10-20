@@ -21,7 +21,7 @@ $(document).ready(function () {
         } else {
             $.ajax({
 
-                url: 'https://loyalitics-test.herokuapp.com/capture',
+                url: 'https://gentle-bastion-62479.herokuapp.com/capture',
                 type: 'POST',
                 data: {
                     "url": captureUrl
