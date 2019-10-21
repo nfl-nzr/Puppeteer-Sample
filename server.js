@@ -1,5 +1,5 @@
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.URL || `http://gentle-bastion-62479.herokuapp.com`
+const BASE_URL = process.env.URL || `https://gentle-bastion-62479.herokuapp.com`
 
 const express = require('express')
 const puppeteer = require("puppeteer");
@@ -28,8 +28,8 @@ const parallelActions = async (page, fileName) => {
 
   return Promise.all([
     page.screenshot({ 
-      path: `${screenshotPath}/${fileName}.png`, fullPage: false })
-     ,page.pdf({ path: `${pdfPath}/${fileName}.pdf`, fullPage: false })
+      path: `${screenshotPath}/${fileName}.png`, fullPage: true })
+     ,page.pdf({ path: `${pdfPath}/${fileName}.pdf`, fullPage: true })
     ])
     .then(done => {
       page.close().catch(err => console.log('Error closing page =: ', err));
@@ -83,7 +83,6 @@ app.post("/capture", async (req, res) => {
   const { url, html } = req.body;
   const pageErr = {};
   if (url) {
-    console.log('Processing url')
     const normalizedUrl = normalizeUrl(url);
     const pageErr = {};
     const valid = validate(normalizedUrl)
