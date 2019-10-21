@@ -1,21 +1,9 @@
 const PORT = process.env.PORT || 3000;
-const HEADERS = {
-  JSON_HEADER: {
-    'Content-Type': 'application/json'
-  },
-  IMG_HEADER: {
-    'Content-Type': 'image/png'
-  },
-  PDF_HEADER: {
-    'Content-Type': 'application/pdf'
-  }
-};
+const BASE_URL = process.env.URL || `http://localhost:3000`
 
-
-const polka = require("polka");
+const express = require('express')
 const puppeteer = require("puppeteer");
 const fs = require('fs');
-const send = require('@polka/send-type');
 const { join } = require('path');
 const { urlencoded } = require('body-parser');
 const screenshotPath = join(__dirname, 'pages/images');
@@ -26,20 +14,23 @@ const { promisify } = require('util');
 const exists = promisify(fs.exists);
 const stream = promisify(fs.readFile);
 
+let browser;
+
 const serve = require('serve-static')(publicDir);
 
+//Init a chromium browser here rather and open tabs instead of new browsers for each request.
 const newBrowser = async () => await puppeteer.launch({ headless: true, args: ['--no-sandbox'] })
 
-const validate = url => {
-  return /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/.test(url)
-}
+const validate = url =>  /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/.test(url);
 
+//Parallely make the screenshot and pdf using a promise array
 const parallelActions = async (page, fileName) => {
 
-  return Promise.all([page.screenshot({ path: `${screenshotPath}/${fileName}.png`, fullPage: false }), page.pdf({
-    path: `${pdfPath}/${fileName}.pdf`,
-    fullPage: false
-  })])
+  return Promise.all([
+    page.screenshot({ 
+      path: `${screenshotPath}/${fileName}.png`, fullPage: false })
+     ,page.pdf({ path: `${pdfPath}/${fileName}.pdf`, fullPage: false })
+    ])
     .then(done => {
       page.close().catch(err => console.log('Error closing page =: ', err));
     })
@@ -49,58 +40,94 @@ const parallelActions = async (page, fileName) => {
     })
 }
 
-const generatePdfAndImage = async url => {
+// Generate pdf and image from provided content. If parseHtml flag is true load page with 
+// provided content else goto url and make image and pdf.
+
+const generatePdfAndImage = async (content, parseHtml) => {
   const fileName = new Date().getTime();
   const obj = {};
   let pageTemp
   try {
-    if (!browser) browser = await newBrowser()
+    if (!browser) browser = await newBrowser();
     const page = await browser.newPage();
     pageTemp = page;
+
     await page.setViewport({ width: 1366, height: 768 });
-    await page.goto(url, { "waitUntil": "networkidle0" });
+
+    if(!parseHtml) {
+      await page.goto(content, { "waitUntil": "networkidle0" });
+    } else {
+      await page.setContent(content);
+    }
 
     await parallelActions(page, fileName);
-    obj.pdf = `https://gentle-bastion-62479.herokuapp.com/pdf/${fileName}`;
-    obj.img = `https://gentle-bastion-62479.herokuapp.com/img/${fileName}`;
+
+    obj.pdf = `${BASE_URL}/pdf/${fileName}`;
+    obj.img = `${BASE_URL}/img/${fileName}`;
+
     return obj;
+
   } catch (error) {
-    if (pageTemp) await pageTemp.close()
+    if (pageTemp) pageTemp.close()
     throw error;
   }
 };
 
-let browser;
 
-const app = polka();
+const app = express();
 
 app.use(urlencoded());
 app.use(serve);
 
 app.post("/capture", async (req, res) => {
-  const { url } = req.body;
-  const normalizedUrl = normalizeUrl(url);
+  const { url, html } = req.body;
   const pageErr = {};
-  const valid = validate(normalizedUrl)
-  if (!valid) return send(res, 400, { message: "Invalid url" }, HEADERS.JSON_HEADER);
-  const links = await generatePdfAndImage(normalizedUrl).catch(err => {
-    console.log(err)
-    if (err instanceof puppeteer.errors.TimeoutError) {
-      pageErr.message = 'Page timeout. Please try later',
-        pageErr.code = 502
-    } else if (err.toString().includes('ERR_NAME_NOT_RESOLVED')) {
-      pageErr.message = 'URL could not be resolved',
-        pageErr.code = 400
-    } else if (err.toString().includes('ERR_CONNECTION_REFUSED')) {
-      pageErr.message = 'Connection refused',
-        pageErr.code = 502
-    } else {
-      pageErr.message = 'Server error.',
-        pageErr.code = 500
-    }
-  });
-  if (Object.entries(pageErr).length > 0 && pageErr.constructor === Object) { return send(res, pageErr.code, { message: pageErr.message }, HEADERS.JSON_HEADER); }
-  else { return send(res, 200, links, HEADERS.JSON_HEADER) };
+  if (url) {
+    console.log('Processing url')
+    const normalizedUrl = normalizeUrl(url);
+    const pageErr = {};
+    const valid = validate(normalizedUrl)
+    if (!valid) return res.status(400).json({message: 'Invalid url'});
+
+    const links = await generatePdfAndImage(normalizedUrl)
+    .catch(err => {
+      console.log(err)
+      if (err instanceof puppeteer.errors.TimeoutError) {
+        pageErr.message = 'Page timeout. Please try later',
+          pageErr.code = 502
+      } else if (err.toString().includes('ERR_NAME_NOT_RESOLVED')) {
+        pageErr.message = 'URL could not be resolved',
+          pageErr.code = 400
+      } else if (err.toString().includes('ERR_CONNECTION_REFUSED')) {
+        pageErr.message = 'Connection refused',
+          pageErr.code = 502
+      } else {
+        pageErr.message = 'Server error.',
+          pageErr.code = 500
+      }
+    });
+
+    if (Object.entries(pageErr).length > 0 && pageErr.constructor === Object) { return res.status(pageErr.code || 500).json({ message: pageErr.message || 'Server encountered an error.' }) }
+    else if(links) { return res.status(200).json({ pdf: links.pdf, img: links.img }) };
+
+  } else if (html) {
+
+    const links = await generatePdfAndImage(html, true)
+    .catch(err => {
+      console.log(err)
+      if (err instanceof puppeteer.errors.TimeoutError) {
+        pageErr.message = 'Page timeout. Please try later',
+          pageErr.code = 502
+      }  else {
+        pageErr.message = 'Server error.',
+          pageErr.code = 500
+      }
+    });
+
+    if (Object.entries(pageErr).length > 0 && pageErr.constructor === Object) { return res.status(pageErr.code || 500).json({ message: pageErr.message || 'Server encountered an error.' }) }
+    else if(links) { return res.status(200).json({ pdf: links.pdf, img: links.img }) };
+  }
+
 });
 
 app.get("/pdf/:id", async (req, res) => {
@@ -108,11 +135,10 @@ app.get("/pdf/:id", async (req, res) => {
   const pdfLoc = join(pdfPath, `${id}.pdf`);
   try {
     const fileExists = await exists(pdfLoc);
-    if (!fileExists) return send(res, 404, { message: 'File not found' }, HEADERS.JSON_HEADER)
-    const file = await stream(pdfLoc).catch(err => console.log(err));
-    send(res, 200, file, HEADERS.PDF_HEADER)
+    if (!fileExists) return res.status(404).json({ message: 'Pdf not found!' })
+    return res.sendFile(pdfLoc)
   } catch (error) {
-    send(res, 200, { message: 'Something broke!' }, HEADERS.JSON_HEADER)
+    return res.status(500).json({ message: 'Something broke!' })
   }
 });
 
@@ -121,20 +147,19 @@ app.get("/img/:id", async (req, res) => {
   const imgPath = join(screenshotPath, `${id}.png`);
   try {
     const fileExists = await exists(imgPath);
-    if (!fileExists) return send(res, 404, { message: 'File not found' }, HEADERS.JSON_HEADER)
-    const file = await stream(imgPath).catch(err => console.log(err));
-    return send(res, 200, file, HEADERS.IMG_HEADER)
+    if (!fileExists) return res.status(404).json({ message: 'Image not found!' })
+    return res.sendFile(imgPath)
   } catch (error) {
-    return send(res, 500, { message: 'Something broke!' }, HEADERS.JSON_HEADER)
+    return res.status(500).json({ message: 'Something broke!' })
   }
 });
 
 app.get('/', async () => {
   try {
     const html = await stream(join(publicDir, "index.html"));
-    send(res, 200, html, { 'Content-type': 'text/html' })
+    return res.sendFile(html)
   } catch (error) {
-    return send(res, 500, { message: 'Something broke!' }, HEADERS.JSON_HEADER)
+    return res.status(500).json({ message: 'Something broke!' })
   }
 })
 
