@@ -1,5 +1,5 @@
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.URL || `http://gentle-bastion-62479.herokuapp.com/`
+const BASE_URL = process.env.URL || `http://gentle-bastion-62479.herokuapp.com`
 
 const express = require('express')
 const puppeteer = require("puppeteer");
