@@ -7,7 +7,7 @@ $(document).ready(function () {
         if(html)data.html= html;
        
         $.ajax({
-            url: 'http://localhost:3000/capture',
+            url: 'http://gentle-bastion-62479.herokuapp.com/capture',
             type: 'POST',
             data,
             dataType: 'json',
